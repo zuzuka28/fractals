@@ -12,21 +12,21 @@ import java.awt.geom.Rectangle2D;
 public class FractalExplorer
 {
     /** ширина и высота отображения в пикселях. **/
-    private int displaySize;
+    private final int displaySize;
 
     /**
      ссылка JImageDisplay, для обновления отображения в разных методах в процессе вычисления фрактала.
      */
-    private JImageDisplay display;
+    private final JImageDisplay display;
 
     /** ссылка на базовый класс для отображения других видов фракталов **/
-    private FractalGenerator fractal;
+    private final FractalGenerator fractal;
 
     /**
      * диапазон
      * то, что мы в сейчас показываем.
      */
-    private Rectangle2D.Double range;
+    private final Rectangle2D.Double range;
 
     /**
      * принимает значение размера отображения в качестве аргумента
@@ -94,12 +94,12 @@ public class FractalExplorer
                  * Находим соответствующие координаты xCoord и yCoord
                  * в области отображения фрактала.
                  */
-                double xCoord = fractal.getCoord(
+                double xCoord = FractalGenerator.getCoord(
                         range.x,
                         range.x + range.width,
                         displaySize,
                         x);
-                double yCoord = fractal.getCoord(
+                double yCoord = FractalGenerator.getCoord(
                         range.y,
                         range.y + range.height,
                         displaySize,
@@ -150,10 +150,10 @@ public class FractalExplorer
         {
             /** получаем корды нажатия **/
             int x = e.getX();
-            double xCoord = fractal.getCoord(range.x,
+            double xCoord = FractalGenerator.getCoord(range.x,
                     range.x + range.width, displaySize, x);
             int y = e.getY();
-            double yCoord = fractal.getCoord(range.y,
+            double yCoord = FractalGenerator.getCoord(range.y,
                     range.y + range.height, displaySize, y);
 
             /** приближаем диапазон в направлении нажатия */
