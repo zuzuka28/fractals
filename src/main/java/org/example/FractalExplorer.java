@@ -35,6 +35,11 @@ public class FractalExplorer
     /** набор фракталов, которые можно отрисовать */
     private final JComboBox fractalCollection;
 
+    private final JButton resetButton = new JButton("Reset");
+    private final JButton saveButton = new JButton("Save");
+    private int rowsRemaining;
+
+
     /**
      * принимает значение размера отображения в качестве аргумента
      * затем сохраняет это значение в соответствующем поле
@@ -65,11 +70,9 @@ public class FractalExplorer
         MouseHandler click = new MouseHandler();
         display.addMouseListener(click);
 
-        JButton resetButton = new JButton("Reset");
         ButtonHandler resetHandler = new ButtonHandler();
         resetButton.addActionListener(resetHandler);
 
-        JButton saveButton = new JButton("Save");
         ButtonHandler saveHandler = new ButtonHandler();
         saveButton.addActionListener(saveHandler);
 
@@ -94,50 +97,20 @@ public class FractalExplorer
         mainFrame.setResizable(false);
     }
 
+    public void enableGUI(boolean b) {
+        saveButton.setEnabled(b);
+        resetButton.setEnabled(b);
+        fractalCollection.setEnabled(b);
+    }
+
     private void drawFractal()
     {
-        /**Проходим через каждый пиксель на дисплее **/
-        for (int x=0; x<displaySize; x++){
-            for (int y=0; y<displaySize; y++){
-
-                /**
-                 * Находим соответствующие координаты xCoord и yCoord
-                 * в области отображения фрактала.
-                 */
-                double xCoord = FractalGenerator.getCoord(
-                        range.x,
-                        range.x + range.width,
-                        displaySize,
-                        x);
-                double yCoord = FractalGenerator.getCoord(
-                        range.y,
-                        range.y + range.height,
-                        displaySize,
-                        y);
-
-                /**
-                 * Вычисляем количество итераций для координат в области для отображения фрактала.
-                 */
-                int iteration = fractal.numIterations(xCoord, yCoord);
-
-                /** если вне множества фрактала то красим черным **/
-                if (iteration == -1){
-                    display.drawPixel(x, y, 0);
-                }
-
-                else {
-                    /** выбираем значение оттенка на основе числа итераций */
-                    float hue = 0.6f + (float) iteration / 200f;
-                    int rgbColor = Color.HSBtoRGB(hue, 1f, 1f);
-
-                    /** обновляем дисплей цветом для каждого пикселя. **/
-                    display.drawPixel(x, y, rgbColor);
-                }
-
-            }
+        enableGUI(false);
+        rowsRemaining = displaySize;
+        for (int i = 0; i < displaySize; i++) {
+            FractalWorker drawRow = new FractalWorker(i);
+            drawRow.execute();
         }
-        /** обновим отображаемое на дисплее */
-        display.repaint();
     }
     private class ButtonHandler implements ActionListener
     {
@@ -176,19 +149,74 @@ public class FractalExplorer
         @Override
         public void mouseClicked(MouseEvent e)
         {
-            /** получаем корды нажатия **/
-            int x = e.getX();
-            double xCoord = FractalGenerator.getCoord(range.x,
-                    range.x + range.width, displaySize, x);
-            int y = e.getY();
-            double yCoord = FractalGenerator.getCoord(range.y,
-                    range.y + range.height, displaySize, y);
+            if (rowsRemaining == 0) {
+                /** получаем корды нажатия **/
+                int x = e.getX();
+                double xCoord = FractalGenerator.getCoord(range.x,
+                        range.x + range.width, displaySize, x);
+                int y = e.getY();
+                double yCoord = FractalGenerator.getCoord(range.y,
+                        range.y + range.height, displaySize, y);
 
-            /** приближаем диапазон в направлении нажатия */
-            fractal.recenterAndZoomRange(range, xCoord, yCoord, 0.5);
+                /** приближаем диапазон в направлении нажатия */
+                fractal.recenterAndZoomRange(range, xCoord, yCoord, 0.5);
 
-            /** перерысовываем */
-            drawFractal();
+                /** перерысовываем */
+                drawFractal();
+            }
+        }
+    }
+    public class FractalWorker extends SwingWorker<Object, Object> {
+        private final int yCoordinate;
+        private int[] rgb;
+
+        public FractalWorker(int y) {
+            this.yCoordinate = y;
+        }
+
+        @Override
+        protected Object doInBackground() {
+            rgb = new int[displaySize];
+
+            /** Итерируемся по пикселям строки **/
+            for (int i = 0; i < displaySize; i++) {
+                    /**
+                     * Находим соответствующие координаты xCoord и yCoord
+                     * в области отображения фрактала.
+                     */
+                    double xCoord = FractalGenerator.getCoord(range.x,range.x + range.width, displaySize, i);
+                    double yCoord = FractalGenerator.getCoord(range.y, range.y + range.height, displaySize, yCoordinate);
+
+                    /**
+                     * Вычисляем количество итераций для координат в области для отображения фрактала.
+                     */
+                    int iteration = fractal.numIterations(xCoord, yCoord);
+
+                    /** если вне множества фрактала то красим черным **/
+                    if (iteration == -1){
+                        rgb[i] = 0;
+                    }
+
+                    else {
+                        /** выбираем значение оттенка на основе числа итераций */
+                        float hue = 0.6f + (float) iteration / 200f;
+                        int rgb = Color.HSBtoRGB(hue, 1f, 1f);
+                        this.rgb[i] = rgb;
+                    }
+
+                }
+            return null;
+        }
+        @Override
+        protected void done() {
+            for (int i = 0; i < displaySize; i++) {
+                display.drawPixel(i, yCoordinate, rgb[i]);
+            }
+            display.repaint(0,0, yCoordinate,displaySize,1);
+            rowsRemaining--;
+            if (rowsRemaining == 0) {
+                enableGUI(true);
+            }
         }
     }
 
