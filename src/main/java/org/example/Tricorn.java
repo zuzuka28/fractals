@@ -2,16 +2,16 @@ package org.example;
 
 import java.awt.geom.Rectangle2D;
 
-public class Mandelbrot extends FractalGenerator {
+public class Tricorn extends FractalGenerator {
 
     public static final int MAX_ITERATIONS = 2000;
 
     @Override
     public void getInitialRange(Rectangle2D.Double range) {
         range.x = -2;
-        range.y = -1.5;
-        range.width = 3;
-        range.height = 3;
+        range.y = -2;
+        range.width = 4;
+        range.height = 4;
     }
 
     @Override
@@ -21,10 +21,9 @@ public class Mandelbrot extends FractalGenerator {
         ComplexNumber point = new ComplexNumber();
         ComplexNumber c = new ComplexNumber(x, y);
 
-        /** Zn = Zn-1 ^ 2 + c */
         while (iteration < MAX_ITERATIONS && point.squareRadius() < 4)
         {
-            point = ComplexNumber.add(ComplexNumber.square(point), c);
+            point = ComplexNumber.add(ComplexNumber.square(point).conjugate(), c);
             iteration += 1;
         }
 
@@ -40,6 +39,6 @@ public class Mandelbrot extends FractalGenerator {
     }
     @Override
     public String toString() {
-        return "Mandelbrot";
+        return "Tricorn";
     }
 }

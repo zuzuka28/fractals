@@ -1,12 +1,16 @@
 package org.example;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.IOException;
 
 
 public class FractalExplorer
@@ -20,13 +24,16 @@ public class FractalExplorer
     private final JImageDisplay display;
 
     /** ссылка на базовый класс для отображения других видов фракталов **/
-    private final FractalGenerator fractal;
+    private FractalGenerator fractal;
 
     /**
      * диапазон
      * то, что мы в сейчас показываем.
      */
-    private final Rectangle2D.Double range;
+    private Rectangle2D.Double range;
+
+    /** набор фракталов, которые можно отрисовать */
+    private final JComboBox fractalCollection;
 
     /**
      * принимает значение размера отображения в качестве аргумента
@@ -39,7 +46,7 @@ public class FractalExplorer
         range = new Rectangle2D.Double();
         fractal.getInitialRange(range);
         display = new JImageDisplay(displaySize, displaySize);
-
+        fractalCollection = new JComboBox<>();
     }
 
     /**
@@ -48,40 +55,43 @@ public class FractalExplorer
      */
     public void createAndShowGUI()
     {
-        /**  использование BorderLayout для содержимого. **/
-        display.setLayout(new BorderLayout());
-        JFrame myFrame = new JFrame("Fractal Explorer");
+        JFrame mainFrame = new JFrame("Fractal Generator");
 
-        /** центрирование **/
-        myFrame.add(display, BorderLayout.CENTER);
+        fractalCollection.addItem(new Mandelbrot());
+        fractalCollection.addItem(new Tricorn());
+        fractalCollection.addItem(new BurningShip());
+        fractalCollection.addActionListener(new ButtonHandler());
 
-        /** кнопка очистки. **/
+        MouseHandler click = new MouseHandler();
+        display.addMouseListener(click);
+
         JButton resetButton = new JButton("Reset");
         ButtonHandler resetHandler = new ButtonHandler();
         resetButton.addActionListener(resetHandler);
 
-        /** хэндлер нажатий крысы **/
-        MouseHandler click = new MouseHandler();
-        display.addMouseListener(click);
+        JButton saveButton = new JButton("Save");
+        ButtonHandler saveHandler = new ButtonHandler();
+        saveButton.addActionListener(saveHandler);
 
-        /** стандартный выход из приложения **/
-        myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JPanel topPanel = new JPanel();
+        JLabel label = new JLabel("Fractals:");
+        topPanel.add(label, BorderLayout.CENTER);
+        topPanel.add(fractalCollection, BorderLayout.CENTER);
 
-        /** Jpanel сверху */
-        JPanel myPanel = new JPanel();
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.add(resetButton, BorderLayout.CENTER);
+        bottomPanel.add(saveButton, BorderLayout.CENTER);
 
-        myFrame.add(myPanel, BorderLayout.NORTH);
+        mainFrame.setLayout(new BorderLayout());
+        mainFrame.add(display, BorderLayout.CENTER);
+        mainFrame.add(topPanel, BorderLayout.NORTH);
+        mainFrame.add(bottomPanel, BorderLayout.SOUTH);
 
-        /** Кнопка ресета снизу */
-        JPanel myBottomPanel = new JPanel();
-        myBottomPanel.add(resetButton);
-        myFrame.add(myBottomPanel, BorderLayout.SOUTH);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        /** Размещаем содержимое фрейма, делаем его видимым и запрещаем изменение размера окна */
-        myFrame.pack();
-        myFrame.setVisible(true);
-        myFrame.setResizable(false);
-
+        mainFrame.pack();
+        mainFrame.setVisible(true);
+        mainFrame.setResizable(false);
     }
 
     private void drawFractal()
@@ -133,10 +143,28 @@ public class FractalExplorer
     {
         public void actionPerformed(ActionEvent e)
         {
-            /** получаем источник нажатия **/
-            String command = e.getActionCommand();
+            if (e.getActionCommand().equals("Reset")) {
+                fractal.getInitialRange(range);
+                drawFractal();
+            } else if (e.getActionCommand().equals("Save")) {
+                JFileChooser chooser = new JFileChooser();
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Image", "png");
+                chooser.setFileFilter(filter);
+                chooser.setAcceptAllFileFilterUsed(false);
 
-            if (command.equals("Reset")) {
+                if (chooser.showSaveDialog(display) == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        ImageIO.write(
+                                display.getRenderedImage(),
+                                "png",
+                                chooser.getSelectedFile().getName().matches(".*[.png]") ? chooser.getSelectedFile() : new File( chooser.getSelectedFile() + ".png"));
+                    } catch (NullPointerException | IOException writeE) {
+                        JOptionPane.showMessageDialog(display, writeE.getMessage(), "Cannot save image", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } else {
+                fractal = (FractalGenerator) fractalCollection.getSelectedItem();
+                range = new Rectangle2D.Double(0,0,0,0);
                 fractal.getInitialRange(range);
                 drawFractal();
             }

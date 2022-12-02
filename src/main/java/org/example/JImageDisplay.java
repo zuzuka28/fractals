@@ -4,7 +4,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class JImageDisplay extends javax.swing.JComponent {
-    private BufferedImage displayImage;
+    public BufferedImage displayImage;
 
     public JImageDisplay(int width, int height) {
         displayImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -13,6 +13,11 @@ public class JImageDisplay extends javax.swing.JComponent {
         Dimension imageDimension = new Dimension(width, height);
         super.setPreferredSize(imageDimension);
     }
+
+    public BufferedImage getRenderedImage(){
+        return this.displayImage;
+    }
+
 
     @Override
     public void paintComponent(Graphics g) {

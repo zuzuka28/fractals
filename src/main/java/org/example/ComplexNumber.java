@@ -41,4 +41,24 @@ class ComplexNumber {
     public static ComplexNumber add(ComplexNumber f, ComplexNumber s) {
         return new ComplexNumber(f.getReal() + s.getReal(), f.getImg() + s.getImg());
     }
+
+    public ComplexNumber abs(){
+        this.setReal(Math.abs(this.getReal()));
+        this.setImg(Math.abs(this.getImg()));
+        return this;
+    }
+
+    public ComplexNumber conjugate(){
+        this.setImg(-this.getImg());
+        return this;
+    }
+
+    public static ComplexNumber abs(ComplexNumber n){
+        return new ComplexNumber(Math.abs(n.getReal()), Math.abs(n.getImg()));
+
+    }
+
+    public static ComplexNumber conjugate(ComplexNumber n){
+        return new ComplexNumber(n.real, -n.img);
+    }
 }
